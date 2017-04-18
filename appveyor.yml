@@ -48,7 +48,14 @@ before_build:
   - ps: Write-Host "Build version set to - $env:APPVEYOR_BUILD_VERSION"
 # Restore
   - dotnet restore
-  
+    
+#--------------------------------------------------
+# Testing
+# TODO: Figure out how to work with just the assembly output.
+#--------------------------------------------------
+test_script:
+   - dotnet test test\%APPVEYOR_PROJECT_NAME%.Tests\%APPVEYOR_PROJECT_NAME%.Tests.csproj
+
 #--------------------------------------------------
 # Build hooks - after
 #--------------------------------------------------
