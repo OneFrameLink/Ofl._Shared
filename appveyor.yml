@@ -1,22 +1,16 @@
 #--------------------------------------------------
-# Version:
-# NOTE: UPDATE THIS TO UPDATE ASSEMBLY AND NUGET 
-# VERSIONS!!!!!!!!
-#--------------------------------------------------
-version: '1.0.{build}'
-
-#--------------------------------------------------
 # Build worker image (VM template)
-# TODO: Move everything to VS.NET 2017
 #--------------------------------------------------
-image: Visual Studio 2015
+image: Visual Studio 2017
 
 #--------------------------------------------------
 # Environment
 #--------------------------------------------------
 environment:
   GITHUB_PERSONAL_ACCESS_TOKEN:
-    secure: PNVFwcCuNr+X7SffsiwiVsa/JzVyZqwNJUbeve+Or/EjOwZxbd1CUC0K/5az9jsT
+    secure: PNVFwcCuNr+X7SffsiwiVsa/JzVyZqwNJUbeve+Or/EjOwZxbd1CUC0K/5az9jsT    
+  GIT_CONFIG_USER_EMAIL:
+    secure: yAZjzbVhtfeKof5pGJ/N65IjSffBIJoX5MZIpqbtHkc=
 
 #--------------------------------------------------
 # Branch whitelist
@@ -42,20 +36,15 @@ install:
 configuration: Release
 
 #--------------------------------------------------
-# Assembly version patching
-#-------------------------------------------------- 
-assembly_info:
-  patch: true
-  file: '**\GlobalAssemblyInfo.cs'
-  assembly_version: "{version}"
-  assembly_file_version: "{version}"
-  assembly_informational_version: "{version}"
-
-#--------------------------------------------------
 # Build hooks - before
 #--------------------------------------------------
 before_build:
-  - nuget restore -verbosity detailed
+# Patch version in csproj
+  - ps: $temp_path = (Get-Item src\$env:APPVEYOR_PROJECT_NAME\$env:APPVEYOR_PROJECT_NAME.csproj).FullName
+  - ps: $temp_csproj = [xml](Get-Content $temp_path)
+  - ps: $env:APPVEYOR_BUILD_VERSION = $temp_csproj.Project.PropertyGroup.Version -replace '\.[0-9]+$', '.$env:APPVEYOR_BUILD_NUMBER'
+# Restore
+  - dotnet restore
   
 #--------------------------------------------------
 # Build hooks - after
@@ -71,7 +60,7 @@ after_build:
 on_success:
   - git config --global credential.helper store
   - ps: Add-Content "$env:USERPROFILE\.git-credentials" "https://$($env:GITHUB_PERSONAL_ACCESS_TOKEN):x-oauth-basic@github.com`n"
-  - git config --global user.email "admin@oneframelink.com"
+  - git config --global user.email "%GIT_CONFIG_USER_EMAIL%"
   - git config --global user.name "One Frame Link"
   - git tag "v%APPVEYOR_BUILD_VERSION%"
   - git push origin "v%APPVEYOR_BUILD_VERSION%"
@@ -94,11 +83,11 @@ artifacts:
 #--------------------------------------------------
 # Deploy NuGet
 #--------------------------------------------------
-deploy:
-  provider: NuGet
-  api_key:
-    secure: AhNvfOiNoCPXb1PnRG18sOfxSmsS+q4iNJ30PsuABsau99QGZ46C4nhSRSoUZehg
-  artifact: NuGet
+#deploy:
+#  provider: NuGet
+#  api_key:
+#    secure: AhNvfOiNoCPXb1PnRG18sOfxSmsS+q4iNJ30PsuABsau99QGZ46C4nhSRSoUZehg
+#  artifact: NuGet
   
 #--------------------------------------------------
 # Notifications
