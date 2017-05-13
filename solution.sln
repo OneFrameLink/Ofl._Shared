@@ -7,9 +7,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{SOURCE_FOLDE
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{TEST_FOLDER_GUID}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ofl.Net.Http", "src\Ofl.Net.Http\Ofl.Net.Http.csproj", "{SOURCE_PROJECT_GUID}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PROJECT_NAME", "src\PROJECT_NAME\PROJECT_NAME.csproj", "{SOURCE_PROJECT_GUID}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ofl.Net.Http.Tests", "test\Ofl.Net.Http.Tests\Ofl.Net.Http.Tests.csproj", "{TEST_PROJECT_GUID}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PROJECT_NAME.Tests", "test\PROJECT_NAME.Tests\PROJECT_NAME.Tests.csproj", "{TEST_PROJECT_GUID}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
