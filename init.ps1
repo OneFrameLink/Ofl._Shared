@@ -1,7 +1,223 @@
 param (
 	[string]$project
 )
-#git submodule add https://github.com/OneFrameLink/Ofl._Shared.git _Shared
+
+function InitializeGit([string] $project, [string] $path) {
+
+    # Clone into project directory
+    git clone "https://github.com/OneFrameLink/$project.git"
+
+    # Set location.
+    Set-Location -Path $path
+
+    # Initialize git.
+    git config user.name casperOne
+    git config user.email casperOne@caspershouse.com
+    git submodule add https://github.com/OneFrameLink/Ofl._Shared.git _shared
+}
+
+function CopyShared([string] $path, [string] $project) {
+    # Copy items out of _shared
+    Copy-Item .\_shared\.gitignore $path
+    Copy-Item .\_shared\appveyor.yml $path
+    Copy-Item .\_shared\directory.build.props $path
+    Copy-Item .\_shared\solution.sln $path\\$project.sln
+}git
+
+function GetGithubJson([string] $project) {
+    return Invoke-WebRequest -Uri https://api.github.com/repos/OneFrameLink/$project -Headers @{"Accept"="application/vnd.github.v3+json"} | ConvertFrom-Json
+}
+
+function SetClassProjectProperties([string] $path, [string] $project, [string] $description,
+    [string] $packageProjectUrl, [string] $repositoryUrl) {
+    # The xml path.
+    $xmlPath = "$path\\$project.csproj"
+
+    # Get the XML from the class project.
+    $xml = [xml] (Get-Content $xmlPath)
+
+    # Get the parent node.
+    $node = $xml.Project.PropertyGroup
+
+    # Set PropertyGroup.Description
+    $newChild = $xml.CreateElement('Description')
+    $newChild.set_InnerXml($description)
+    $node.AppendChild($newChild)
+
+    # AssemblyName.
+    $newChild = $xml.CreateElement('AssemblyName')
+    $newChild.set_InnerXml($project)
+    $node.AppendChild($newChild)
+
+    # PackageId.
+    $newChild = $xml.CreateElement('PackageId')
+    $newChild.set_InnerXml($project)
+    $node.AppendChild($newChild)
+
+    # PackageProjectUrl.
+    $newChild = $xml.CreateElement('PackageProjectUrl')
+    $newChild.set_InnerXml($packageProjectUrl)
+    $node.AppendChild($newChild)
+
+    # PackageProjectUrl.
+    $newChild = $xml.CreateElement('RepositoryUrl')
+    $newChild.set_InnerXml($repositoryUrl)
+    $node.AppendChild($newChild)
+
+    # TODO: Tags/topics
+
+    # Set PropertyGroup.Version
+    $newChild = $xml.CreateElement('Version')
+    $newChild.set_InnerXml('1.0.0')
+    $node.AppendChild($newChild)
+
+    # Save
+    $xml.Save($xmlPath)
+}
+
+function CreateClassProject([string] $path, [string] $project) {
+    # Create the project.
+    dotnet new classlib -f netstandard1.3 -o $path -n $project
+
+    # Get the github JSON.
+    $json = GetGithubJson $project
+
+    # Set the properties.
+    SetClassProjectProperties $path $project $json.description $json.html_url $json.clone_url
+}
+
+function SetTestProjectProperties([string] $path, [string] $testProject, [string] $project) {
+    # The xml path.
+    $xmlPath = "$path\\$testProject.csproj"
+
+    # Get the XML from the class project.
+    $xml = [xml] (Get-Content $xmlPath)
+
+    # Get the parent node.
+    $node = $xml.Project.PropertyGroup
+
+    # Remove target framework.
+    $node.RemoveChild($node.SelectSingleNode("TargetFramework"))
+
+    # Add TargetFrameworks
+    $newChild = $xml.CreateElement('TargetFrameworks')
+    $newChild.set_InnerXml('netcoreapp1.1;net461')
+    $node.AppendChild($newChild)
+
+    # Set to the project parent.
+    $node = $xml.Project
+
+    # Create the comment.
+    $newChild = $xml.CreateComment(
+'
+    Required as per: http://stackoverflow.com/a/43955719/50776 to
+    generate a .dll.config file with binding redirects.
+  ')
+    $node.AppendChild($newChild)
+
+    # The property group.
+    $propertyGroup = $xml.CreateElement('PropertyGroup')
+    $propertyGroup.SetAttribute('Condition', "'`$(TargetFramework)' == 'net461'")
+    $autoGenerateBindingRedirects = $xml.CreateElement('AutoGenerateBindingRedirects')
+    $autoGenerateBindingRedirects.set_InnerXml('true')
+    $propertyGroup.AppendChild($autoGenerateBindingRedirects)
+    $generateBindingRedirectsOutputType = $xml.CreateElement('GenerateBindingRedirectsOutputType')
+    $generateBindingRedirectsOutputType.set_InnerXml('true')
+    $propertyGroup.AppendChild($generateBindingRedirectsOutputType)
+    $node.AppendChild($propertyGroup)
+
+    # Add the reference to the main project.
+    $itemGroup = $xml.CreateElement('ItemGroup')
+    $projectReference = $xml.CreateElement('ProjectReference')
+    $projectReference.SetAttribute('Include', "..\..\src\$project\$project.csproj")
+    $itemGroup.AppendChild($projectReference)
+    $node.AppendChild($itemGroup)
+
+    # Save
+    $xml.Save($xmlPath)
+}
+
+
+function CreateTestProject([string] $path, [string] $testProject, [string] $project) {
+    # Create the test project.
+    dotnet new xunit -f netcoreapp1.1 -f net461 -o $path -n $testProject
+
+    # Set the properties
+    SetTestProjectProperties $path $testProject $project
+}
+
+function UpdateSolution([string] $path, [string] $project) {
+    # Get the content as a string.
+    $solution = Get-Content $path\\$project.sln
+
+    # Replace everything.
+    $solution = $solution.Replace("SOURCE_FOLDER_GUID", [guid]::NewGuid().ToString().ToUpper())
+    $solution = $solution.Replace("TEST_FOLDER_GUID", [guid]::NewGuid().ToString().ToUpper())
+    $solution = $solution.Replace("SOURCE_PROJECT_GUID", [guid]::NewGuid().ToString().ToUpper())
+    $solution = $solution.Replace("TEST_PROJECT_GUID", [guid]::NewGuid().ToString().ToUpper())
+    $solution = $solution.Replace("PROJECT_NAME", $project)
+
+    # Save back.
+    Set-Content $path\\$project.sln $solution
+}
+
+function CreateProjects([string] $project, [string] $path) {
+    # The test project.
+    $testProject = "$project.Tests"
+
+    # The source and test paths.
+    $srcPath = "$path\src\$project"
+    $testPath = "$path\test\$testProject"
+
+    # Create the source and test subdirectories
+    New-Item $srcPath -type directory
+    New-Item $testPath -type directory
+
+    # Create the class project.
+    CreateClassProject $srcPath $project
+
+    # Create the test project
+    CreateTestProject $testPath $testProject $project
+
+    # Update the solution.
+    UpdateSolution $path $project
+}
+
+function CreateSolution([string] $project, [string] $path, [string] $root) {
+    Write-Host
+    Write-Host "Starting creation of solution"
+
+    # Initialize git.
+    InitializeGit $project $path
+
+    # Copy shared out into the root.
+    CopyShared $path $project
+
+    # Create the projects.
+    CreateProjects $project $path
+
+    explorer .
+
+    Set-Location -Path $root
+
+    Write-Host "Creation of solution complete"
+}
+
+function DeleteExisting([string] $project, [string] $path) {
+    # Delete the directory if it exists.
+    Write-Host "Starting removal of directory $path"
+    Remove-Item $project -recurse
+    Write-Host "Removal of directory $path complete"
+    Write-Host
+}
+
+function BeginDebug([string] $project, [string] $root, [string] $path) {
+    # Write-Host
+    Write-Host "Project: $project"
+    Write-Host "Root: $root"
+    Write-Host "Path: $path"
+    Write-Host
+}
 
 # The root
 $root = (Get-Item -Path ".\" -Verbose).FullName
@@ -9,59 +225,12 @@ $root = (Get-Item -Path ".\" -Verbose).FullName
 # The path.
 $path = $root + "\" + $project
 
-# Write-Host
-Write-Host "Project: $project"
-Write-Host "Root: $root"
-Write-Host "Path: $path"
-Write-Host
+# Begin debug info.
+BeginDebug $project $root $path
 
-# Delete the directory if it exists.
-Write-Host "Starting removal of directory $path"
-Remove-Item $project -recurse
-Write-Host "Removal of directory $path complete"
-Write-Host
-
-Write-Host
-Write-Host "Starting initialization of project"
-
-# Clone into project directory
-git clone "https://github.com/OneFrameLink/$project.git"
-
-# Set location.
-Set-Location -Path $path
-
-# Initialize git.
-git config user.name casperOne
-git config user.email casperOne@caspershouse.com
-git submodule add https://github.com/OneFrameLink/Ofl._Shared.git _shared
-
-# Copy items out of _shared
-Copy-Item .\_shared\.gitignore $path
-Copy-Item .\_shared\appveyor.yml $path
-Copy-Item .\_shared\directory.build.props $path
-
-# The test project.
-$testProject = "$project.Tests"
-
-# The source and test paths.
-$srcPath = "$path\src\$project"
-$testPath = "$path\test\$testProject"
-
-# Create the source and test subdirectories
-New-Item $srcPath -type  directory
-New-Item $testPath -type  directory
+# Delete existing.
+DeleteExisting $project $path
 
 # Create the solution
-dotnet new sln
+CreateSolution $project $path $root
 
-# Create the project.
-dotnet new classlib -f netstandard1.3 -o $srcPath -n $project
-
-# Create the test project.
-dotnet new xunit -f netcoreapp1.1 -o $testPath -n $testProject
-
-explorer .
-
-Set-Location -Path $root
-
-Write-Host "Initialization of project complete"
