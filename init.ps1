@@ -21,7 +21,7 @@ function CopyShared([string] $path, [string] $project) {
     Copy-Item .\_shared\.gitignore $path
     Copy-Item .\_shared\appveyor.yml $path
     Copy-Item .\_shared\directory.build.props $path
-    Copy-Item .\_shared\solution.sln $path\\$project.sln
+    Copy-Item .\_shared\solution $path\\$project.sln
 }git
 
 function GetGithubJson([string] $project) {
