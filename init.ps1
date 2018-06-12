@@ -22,9 +22,11 @@ function CopyShared([string] $path, [string] $project) {
     Copy-Item .\_shared\appveyor.yml $path
     Copy-Item .\_shared\directory.build.props $path
     Copy-Item .\_shared\solution $path\\$project.sln
+    Copy-Item .\_shared\sln.DotSettings $path\\$project.sln.DotSettings
 }git
 
 function GetGithubJson([string] $project) {
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     return Invoke-WebRequest -Uri https://api.github.com/repos/OneFrameLink/$project -Headers @{"Accept"="application/vnd.github.v3+json"} | ConvertFrom-Json
 }
 
@@ -77,7 +79,7 @@ function SetClassProjectProperties([string] $path, [string] $project, [string] $
 
 function CreateClassProject([string] $path, [string] $project) {
     # Create the project.
-    dotnet new classlib -f netstandard1.3 -o $path -n $project
+    dotnet new classlib -f netstandard2.0 -o $path -n $project
 
     # Get the github JSON.
     $json = GetGithubJson $project
@@ -101,7 +103,7 @@ function SetTestProjectProperties([string] $path, [string] $testProject, [string
 
     # Add TargetFrameworks
     $newChild = $xml.CreateElement('TargetFrameworks')
-    $newChild.set_InnerXml('netcoreapp1.1;net461')
+    $newChild.set_InnerXml('netcoreapp2.0;net461')
     $node.AppendChild($newChild)
 
     # Set to the project parent.
@@ -140,7 +142,7 @@ function SetTestProjectProperties([string] $path, [string] $testProject, [string
 
 function CreateTestProject([string] $path, [string] $testProject, [string] $project) {
     # Create the test project.
-    dotnet new xunit -f netcoreapp1.1 -f net461 -o $path -n $testProject
+    dotnet new xunit -f netcoreapp2.1 -o $path -n $testProject
 
     # Set the properties
     SetTestProjectProperties $path $testProject $project
@@ -155,6 +157,8 @@ function UpdateSolution([string] $path, [string] $project) {
     $solution = $solution.Replace("TEST_FOLDER_GUID", [guid]::NewGuid().ToString().ToUpper())
     $solution = $solution.Replace("SOURCE_PROJECT_GUID", [guid]::NewGuid().ToString().ToUpper())
     $solution = $solution.Replace("TEST_PROJECT_GUID", [guid]::NewGuid().ToString().ToUpper())
+    $solution = $solution.Replace("SOLUTION_ITEMS_GUID", [guid]::NewGuid().ToString().ToUpper())
+    $solution = $solution.Replace("EXTENSIBILITY_GLOBAL_SECTION_SOLUTION_GUID", [guid]::NewGuid().ToString().ToUpper())
     $solution = $solution.Replace("PROJECT_NAME", $project)
 
     # Save back.
