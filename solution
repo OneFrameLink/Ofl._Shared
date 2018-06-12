@@ -63,7 +63,4 @@ Global
 		{SOURCE_PROJECT_GUID} = {SOURCE_FOLDER_GUID}
 		{TEST_PROJECT_GUID} = {TEST_FOLDER_GUID}
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {EXTENSIBILITY_GLOBAL_SECTION_SOLUTION_GUID}
-	EndGlobalSection
 EndGlobal
