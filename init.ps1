@@ -23,7 +23,7 @@ function CopyShared([string] $path, [string] $project) {
     Copy-Item .\_shared\directory.build.props $path
     Copy-Item .\_shared\solution $path\\$project.sln
     Copy-Item .\_shared\sln.DotSettings $path\\$project.sln.DotSettings
-}git
+}
 
 function GetGithubJson([string] $project) {
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -142,7 +142,7 @@ function SetTestProjectProperties([string] $path, [string] $testProject, [string
 
 function CreateTestProject([string] $path, [string] $testProject, [string] $project) {
     # Create the test project.
-    dotnet new xunit -f netcoreapp2.1 -o $path -n $testProject
+    dotnet new xunit -o $path -n $testProject
 
     # Set the properties
     SetTestProjectProperties $path $testProject $project
@@ -210,7 +210,7 @@ function CreateSolution([string] $project, [string] $path, [string] $root) {
 function DeleteExisting([string] $project, [string] $path) {
     # Delete the directory if it exists.
     Write-Host "Starting removal of directory $path"
-    Remove-Item $project -recurse
+    Remove-Item -LiteralPath $path -Force -Recurse
     Write-Host "Removal of directory $path complete"
     Write-Host
 }
