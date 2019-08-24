@@ -23,7 +23,7 @@ function CopyShared([string] $path, [string] $project) {
     Copy-Item .\_shared\directory.build.props $path
     Copy-Item .\_shared\solution $path\\$project.sln
     Copy-Item .\_shared\sln.DotSettings $path\\$project.sln.DotSettings
-}git
+}
 
 function GetGithubJson([string] $project) {
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -210,7 +210,7 @@ function CreateSolution([string] $project, [string] $path, [string] $root) {
 function DeleteExisting([string] $project, [string] $path) {
     # Delete the directory if it exists.
     Write-Host "Starting removal of directory $path"
-    Remove-Item $project -recurse
+    Remove-Item -LiteralPath $path -Force -Recurse
     Write-Host "Removal of directory $path complete"
     Write-Host
 }
