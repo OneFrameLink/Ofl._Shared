@@ -142,7 +142,7 @@ function SetTestProjectProperties([string] $path, [string] $testProject, [string
 
 function CreateTestProject([string] $path, [string] $testProject, [string] $project) {
     # Create the test project.
-    dotnet new xunit -f netcoreapp2.1 -o $path -n $testProject
+    dotnet new xunit -o $path -n $testProject
 
     # Set the properties
     SetTestProjectProperties $path $testProject $project
