@@ -39,8 +39,6 @@ configuration: Release
 # Build hooks - before
 #--------------------------------------------------
 before_build:
-# Need to install the SDK as per: https://help.appveyor.com/discussions/problems/22448-dotnet-core-30-and-netstandard-21
-  - cmd: choco install dotnetcore-sdk --version 3.1.100
 # Patch version in csproj
   - ps: $temp_path = (Get-Item src\$env:APPVEYOR_PROJECT_NAME\$env:APPVEYOR_PROJECT_NAME.csproj).FullName
   - ps: $temp_csproj = [xml](Get-Content $temp_path)
@@ -64,7 +62,7 @@ test_script:
 after_build:
 # NOTE: "dotnet pack" is not supported yet, as per
 # https://github.com/NuGet/Home/issues/4491
-   - msbuild /t:pack src\%APPVEYOR_PROJECT_NAME%\%APPVEYOR_PROJECT_NAME%.csproj
+   - dotnet pack src\%APPVEYOR_PROJECT_NAME%\%APPVEYOR_PROJECT_NAME%.csproj
  
 #--------------------------------------------------
 # Build hooks - on_success
