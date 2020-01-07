@@ -84,6 +84,9 @@ nuget:
   # disable publishing of .nupkg artifacts to
   # account/project feeds for pull request builds
   disable_publish_on_pr: true
+  # Publish symbols, as per: https://www.appveyor.com/docs/build-phase/#packaging-symbols
+  publish_nuget_symbols: true
+  use_snupkg_format: true
   
 #--------------------------------------------------
 # Artifact configuration
