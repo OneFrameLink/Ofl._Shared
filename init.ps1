@@ -79,7 +79,7 @@ function SetClassProjectProperties([string] $path, [string] $project, [string] $
 
 function CreateClassProject([string] $path, [string] $project) {
     # Create the project.
-    dotnet new classlib -f netstandard2.0 -o $path -n $project
+    dotnet new classlib -f netstandard2.1 -o $path -n $project
 
     # Get the github JSON.
     $json = GetGithubJson $project
@@ -103,30 +103,11 @@ function SetTestProjectProperties([string] $path, [string] $testProject, [string
 
     # Add TargetFrameworks
     $newChild = $xml.CreateElement('TargetFrameworks')
-    $newChild.set_InnerXml('netcoreapp2.0;net461')
+    $newChild.set_InnerXml('netcoreapp3.1')
     $node.AppendChild($newChild)
 
     # Set to the project parent.
     $node = $xml.Project
-
-    # Create the comment.
-    $newChild = $xml.CreateComment(
-'
-    Required as per: http://stackoverflow.com/a/43955719/50776 to
-    generate a .dll.config file with binding redirects.
-  ')
-    $node.AppendChild($newChild)
-
-    # The property group.
-    $propertyGroup = $xml.CreateElement('PropertyGroup')
-    $propertyGroup.SetAttribute('Condition', "'`$(TargetFramework)' == 'net461'")
-    $autoGenerateBindingRedirects = $xml.CreateElement('AutoGenerateBindingRedirects')
-    $autoGenerateBindingRedirects.set_InnerXml('true')
-    $propertyGroup.AppendChild($autoGenerateBindingRedirects)
-    $generateBindingRedirectsOutputType = $xml.CreateElement('GenerateBindingRedirectsOutputType')
-    $generateBindingRedirectsOutputType.set_InnerXml('true')
-    $propertyGroup.AppendChild($generateBindingRedirectsOutputType)
-    $node.AppendChild($propertyGroup)
 
     # Add the reference to the main project.
     $itemGroup = $xml.CreateElement('ItemGroup')
