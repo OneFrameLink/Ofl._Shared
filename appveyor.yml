@@ -48,8 +48,8 @@ build:
 # Build hooks - before
 #--------------------------------------------------
 before_build:
-# Patch version in csproj
-  - ps: $temp_path = (Get-Item src\$env:APPVEYOR_PROJECT_NAME\$env:APPVEYOR_PROJECT_NAME.csproj).FullName
+# Patch version in directory.build.props
+  - ps: $temp_path = (Get-Item directory.build.props).FullName
   - ps: $temp_csproj = [xml](Get-Content $temp_path)
   - ps: $temp_csproj.Project.PropertyGroup.Version = $temp_csproj.Project.PropertyGroup.Version -replace '\.[0-9]+$', ".$env:APPVEYOR_BUILD_NUMBER"
   - ps: $temp_csproj.Save($temp_path)
