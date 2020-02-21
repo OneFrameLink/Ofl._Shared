@@ -13,6 +13,14 @@ environment:
     secure: yAZjzbVhtfeKof5pGJ/N65IjSffBIJoX5MZIpqbtHkc=
 
 #--------------------------------------------------
+# Note that the following is custom to this project and
+# needs to be replicated if this file is copy and pasted
+# from Ofl._shared.
+#--------------------------------------------------
+  GOOGLE__APIKEY:
+    secure: m5yvnKtFRUWJS1CeQQVub2aanj5aB4BLn/Y+pyC2PmVbKzdgrPx7FZT3iKWaQP8u
+
+#--------------------------------------------------
 # Branch whitelist
 #--------------------------------------------------
 branches:
@@ -60,11 +68,11 @@ before_build:
     
 #--------------------------------------------------
 # Testing
-# TODO: Figure out how to work with just the assembly output.
 #--------------------------------------------------
-test_script:
-   - dotnet test test\%APPVEYOR_PROJECT_NAME%.Tests\%APPVEYOR_PROJECT_NAME%.Tests.csproj
- 
+test:
+  assemblies:
+    only:
+      - '**\*.Tests.dll' 
 #--------------------------------------------------
 # Build hooks - on_success
 #
