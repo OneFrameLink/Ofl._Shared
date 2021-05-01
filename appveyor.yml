@@ -8,7 +8,7 @@ image: Visual Studio 2019
 #--------------------------------------------------
 environment:
   GITHUB_PERSONAL_ACCESS_TOKEN:
-    secure: PNVFwcCuNr+X7SffsiwiVsa/JzVyZqwNJUbeve+Or/EjOwZxbd1CUC0K/5az9jsT    
+    secure: Me6ap8ymREJWZ6eauE3ynUjq2e+xPQF3fMOc0+cUmdG0wM8a96KAO/pCiPzYH7rX
   GIT_CONFIG_USER_EMAIL:
     secure: yAZjzbVhtfeKof5pGJ/N65IjSffBIJoX5MZIpqbtHkc=
 
